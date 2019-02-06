@@ -23,8 +23,9 @@ Section Cross References
     main_3.o(.text) refers to system_stm32f4xx.o(.text) for SystemInit
     main_3.o(.text) refers to ess_helper.o(.text) for ess_helper_init
     main_3.o(.text) refers to main_3.o(.data) for .data
+    minunit.o(.text) refers to led_driver_test_wrapper.o(.text) for hal_led_init
+    minunit.o(.text) refers to pwm_driver.o(.text) for pwm_driver_init
     minunit.o(.text) refers to printf3.o(i.__0printf$3) for __2printf
-    minunit.o(.text) refers to led_driver_test_wrapper.o(.text) for get_hal_port
     minunit.o(.text) refers to minunit.o(.data) for .data
     led_driver_test_wrapper.o(.text) refers to led_driver.o(.text) for led_init
     led_driver_test_wrapper.o(.text) refers to led_driver_test_wrapper.o(.data) for .data
@@ -329,8 +330,8 @@ Removing Unused input sections from the image.
     Removing main_3.o(.rrx_text), (6 bytes).
     Removing main_3.o(.text), (120 bytes).
     Removing main_3.o(.data), (8 bytes).
-    Removing minunit.o(.text), (608 bytes).
-    Removing minunit.o(.data), (8 bytes).
+    Removing minunit.o(.text), (1032 bytes).
+    Removing minunit.o(.data), (4 bytes).
     Removing led_driver_test_wrapper.o(.text), (36 bytes).
     Removing led_driver_test_wrapper.o(.data), (4 bytes).
     Removing led_driver_test_wrapper.o(.data), (4 bytes).
@@ -341,7 +342,7 @@ Removing Unused input sections from the image.
     Removing cdrcmple.o(.text), (48 bytes).
     Removing depilogue.o(.text), (186 bytes).
 
-43 unused section(s) (total 2670 bytes) removed from the image.
+43 unused section(s) (total 3090 bytes) removed from the image.
 
 ==============================================================================
 

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "minunit.h"
 #include "led_driver_test_wrapper.h"
+#include "pwm_driver.h"
 
 #define KRED  "\x1B[31m"
 #define KGRN  "\x1B[32m"
@@ -8,13 +9,6 @@
 #define KEND  "\033[0m"
 
 int tests_run = 0;
-
-int foo = 7;
-
-static char * test_foo() {
-	mu_assert("ERROR: foo !- 7", foo == 7);
-	return 0;
-}
 
 static uint32_t countZeros(uint32_t i) {
 uint32_t count = 0;
@@ -32,12 +26,12 @@ static char * test_led_init() {
 	uint32_t initialZeros = countZeros(initialPort);
 
  	hal_led_init(&led, 2);
-	mu_assert("ERROR: led pin was not set", led.pin != 0);
+	mu_assert("led pin was not set", led.pin != 0);
 
 	uint32_t finalPort = *led.port;
-	mu_assert("ERROR: port register had some bits set", (finalPort & ~initialPort) == 0);
-	mu_assert("ERROR: port register changed by more than one bit", finalPort == initialPort || countZeros(finalPort) == initialZeros + 1);
-    mu_assert("ERROR: led port was not unset", ((finalPort >> 2) & 0x1) == 0);
+	mu_assert("port register had some bits set", (finalPort & ~initialPort) == 0);
+	mu_assert("port register changed by more than one bit", finalPort == initialPort || countZeros(finalPort) == initialZeros + 1);
+    mu_assert("led port was not unset", ((finalPort >> 2) & 0x1) == 0);
 	return 0;
 }
 
@@ -49,23 +43,76 @@ static char * test_led_on() {
 	hal_led_on(&led);
 	uint32_t finalPort = *led.port;
 
-	mu_assert("ERROR: no port register bit set", (finalPort & ~initialPort) != 0);
-	mu_assert("ERROR: port register changed by more than one bit", countZeros(finalPort) == initialZeros - 1);
-    mu_assert("ERROR: led port was not set", ((finalPort >> 5) & 0x1) == 1);
+	mu_assert("no port register bit set", (finalPort & ~initialPort) != 0);
+	mu_assert("port register changed by more than one bit", countZeros(finalPort) == initialZeros - 1);
+	mu_assert("led port was not set", ((finalPort >> 5) & 0x1) == 1);
 	return 0;
 }
 
+static char * test_pwm_update() {
+	LED_t led0 = {0};
+ 	hal_led_init(&led0, 0);
+	
+	LED_t led1 = {0};
+ 	hal_led_init(&led1, 1);
+	
+	LED_t led2 = {0};
+ 	hal_led_init(&led2, 2);
+	
+	LED_t led3 = {0};
+ 	hal_led_init(&led3, 3);
+
+	pwm_driver_init(&led0, &led1, &led2, &led3);
+
+	pwm_driver_update();
+	
+	mu_assert("led0 should be off", hal_led_read(&led0) == 0);
+	mu_assert("led1 should be off", hal_led_read(&led1) == 0);
+	mu_assert("led2 should be off", hal_led_read(&led2) == 0);
+	mu_assert("led3 should be off", hal_led_read(&led3) == 0);
+
+	pwm_driver_set(0, 100);
+	pwm_driver_update();
+	mu_assert("led0 should be on", hal_led_read(&led0) == 1);
+	mu_assert("led1 should be off", hal_led_read(&led1) == 0);
+	mu_assert("led2 should be off", hal_led_read(&led2) == 0);
+	mu_assert("led3 should be off", hal_led_read(&led3) == 0);
+
+	pwm_driver_set(1, 100);
+	pwm_driver_update();
+	mu_assert("led0 should be on", hal_led_read(&led0) == 1);
+	mu_assert("led1 should be on", hal_led_read(&led1) == 1);
+	mu_assert("led2 should be off", hal_led_read(&led2) == 0);
+	mu_assert("led3 should be off", hal_led_read(&led3) == 0);
+
+	pwm_driver_set(2, 100);
+	pwm_driver_update();
+	mu_assert("led0 should be on", hal_led_read(&led0) == 1);
+	mu_assert("led1 should be on", hal_led_read(&led1) == 1);
+	mu_assert("led2 should be on", hal_led_read(&led2) == 1);
+	mu_assert("led3 should be off", hal_led_read(&led3) == 0);
+
+	pwm_driver_set(3, 100);
+	pwm_driver_update();
+	mu_assert("led0 should be on", hal_led_read(&led0) == 1);
+	mu_assert("led1 should be on", hal_led_read(&led1) == 1);
+	mu_assert("led2 should be on", hal_led_read(&led2) == 1);
+	mu_assert("led3 should be on", hal_led_read(&led3) == 1);
+
+	return 0;	
+}
+
 static char * all_tests() {
-	mu_run_test(test_foo);
 	mu_run_test(test_led_init);
 	mu_run_test(test_led_on);
+	mu_run_test(test_pwm_update);
 	return 0;
 }
 
 int testMain(int argc, char **argv) {
 	char *result = all_tests();
 	if (result != 0) {
-		printf("%s%s%s\n", KRED, result, KEND);
+		printf("%sERROR: %s%s\n", KRED, result, KEND);
 	} else {
 		printf("%sALL TESTS PASSED%s\n", KGRN, KEND);
 	}
