@@ -1,0 +1,33 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build minunit",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-g",
+                "-I../ESS",
+                "${workspaceFolder}/../ESS/led_driver.c",
+                "${workspaceFolder}/Tests/led_driver_test_wrapper.c",
+                "${workspaceFolder}/Tests/minunit.c",
+                "${workspaceFolder}/Tests/consoleRunner.c",
+                "-o",
+                "C:/exez/minunit.exe"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "Run minunit",
+            "type": "shell",
+            "command": "C:/exez/minunit.exe",
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}

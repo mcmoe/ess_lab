@@ -857,14 +857,13 @@ ARM Macro Assembler    Page 14
               00000000 
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp --apcs=int
 erwork --depend=.\targets\stm32f4_discovery\startup_stm32f40_41xxx.d -o.\target
-s\stm32f4_discovery\startup_stm32f40_41xxx.o -IC:\CloudProjects\2016\SEP\Teachi
-ng\ESSVersioned\Labs\Day1\D1_007_Skeleton\01-STM32F4xx_Keil_CMSIS_Default_Proje
-ct\RTE -IC:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\2.7.0\Drivers\CMSIS\Device\ST\S
-TM32F4xx\Include -IC:\Keil_v5\ARM\CMSIS\Include --predefine="__EVAL SETA 1" --p
-redefine="__MICROLIB SETA 1" --predefine="__UVISION_VERSION SETA 517" --predefi
-ne="STM32F407xx SETA 1" --list=.\startup_stm32f40_41xxx.lst ..\00-STM32F4xx_STA
-NDARD_PERIPHERAL_DRIVERS\CMSIS\Device\ST\STM32F4xx\Source\Templates\arm\startup
-_stm32f40_41xxx.s
+s\stm32f4_discovery\startup_stm32f40_41xxx.o -I.\RTE\_STM32F4-Discovery -IC:\Ke
+il_v5\ARM\PACK\Keil\STM32F4xx_DFP\2.13.0\Drivers\CMSIS\Device\ST\STM32F4xx\Incl
+ude -IC:\Keil_v5\ARM\CMSIS\Include --predefine="__EVAL SETA 1" --predefine="__M
+ICROLIB SETA 1" --predefine="__UVISION_VERSION SETA 527" --predefine="STM32F407
+xx SETA 1" --list=.\startup_stm32f40_41xxx.lst ..\00-STM32F4xx_STANDARD_PERIPHE
+RAL_DRIVERS\CMSIS\Device\ST\STM32F4xx\Source\Templates\arm\startup_stm32f40_41x
+xx.s
 
 
 
