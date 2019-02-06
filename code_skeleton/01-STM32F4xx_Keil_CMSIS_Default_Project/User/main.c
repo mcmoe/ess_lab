@@ -16,6 +16,7 @@
 
 #include "led_driver.h"
 #include "pwm_driver.h"
+#include "pwm_updater.h"
 
 // Use a define for the address of the PORTD ouput register
 #define PORTD ((volatile uint32_t*) 0x40020C14)
@@ -88,24 +89,6 @@ void pwm_main(LED_t * led, uint32_t * on_time, uint32_t * off_time, uint32_t a_s
 	}
 }
 
-uint32_t * change_and_get(uint32_t * brightness, int32_t * change) {
-	*brightness = (*brightness + *change) % 101;
-	return brightness;
-}
-
-void update_channel(uint32_t ** currentChannel, uint32_t * targetChannel, uint32_t * brightness, int32_t * change, uint32_t * nextChannel) {
-	if (**currentChannel == *targetChannel) {
-		pwm_driver_set(*targetChannel, *change_and_get(brightness, change));
-
-		if(*brightness == 100) {
-			 *change = -1;
-		} else if (*brightness == 0) {
-			*currentChannel = nextChannel;
-			*change = 1;
-		}
-	}
-}
-
 int main(void) {
 	/* Initialize system */
 	SystemInit();
@@ -113,40 +96,18 @@ int main(void) {
 	ess_helper_init();
 	// Main loop 
 
-	LED_t greenLed = { 0 };
+	LED_t greenLed, orangeLed, redLed, blueLed = { 0 };
 	led_init(&greenLed, PORTD, greenPin);
-	
-	LED_t orangeLed = { 0 };
 	led_init(&orangeLed, PORTD, orangePin);
-
-	LED_t redLed = { 0 };
 	led_init(&redLed, PORTD, redPin);
-
-	LED_t blueLed = { 0 };
 	led_init(&blueLed, PORTD, bluePin);	
 
-	uint32_t greenChannel = 0;
-	uint32_t orangeChannel = 1;
-	uint32_t redChannel = 2;
-	uint32_t blueChannel = 3;
-	uint32_t * currentChannel = &greenChannel;
-	
-	uint32_t greenBrightness = 0;
-	uint32_t orangeBrightness = 0;
-	uint32_t redBrightness = 0;
-	uint32_t blueBrightness = 0;
-	int32_t change = 1;
-	
 	pwm_driver_init(&greenLed, &orangeLed, &redLed, &blueLed);	
 	const uint32_t period = 100;
 
 	while (1) {
 		delay_usec(100);
-
-		update_channel(&currentChannel, &greenChannel, &greenBrightness, &change, &orangeChannel);		
-		update_channel(&currentChannel, &orangeChannel, &orangeBrightness, &change, &redChannel);
-		update_channel(&currentChannel, &redChannel, &redBrightness, &change, &blueChannel);
-		update_channel(&currentChannel, &blueChannel, &blueBrightness, &change, &greenChannel);
+		pwm_update_channels();
 
 		uint32_t i = 0;
 		for (;i <= period * 50; i++) {

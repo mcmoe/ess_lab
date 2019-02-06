@@ -495,6 +495,16 @@
               <FileType>5</FileType>
               <FilePath>..\ESS\pwm_driver.h</FilePath>
             </File>
+            <File>
+              <FileName>pwm_updater.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ESS\pwm_updater.c</FilePath>
+            </File>
+            <File>
+              <FileName>pwm_updater.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\ESS\pwm_updater.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
