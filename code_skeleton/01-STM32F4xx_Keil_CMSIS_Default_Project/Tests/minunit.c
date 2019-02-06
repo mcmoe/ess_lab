@@ -2,6 +2,7 @@
 #include "minunit.h"
 #include "led_driver_test_wrapper.h"
 #include "pwm_driver.h"
+#include "pwm_updater.h"
 
 #define KRED  "\x1B[31m"
 #define KGRN  "\x1B[32m"
@@ -50,16 +51,10 @@ static char * test_led_on() {
 }
 
 static char * test_pwm_update() {
-	LED_t led0 = {0};
+	LED_t led0, led1, led2, led3 = {0};
  	hal_led_init(&led0, 0);
-	
-	LED_t led1 = {0};
  	hal_led_init(&led1, 1);
-	
-	LED_t led2 = {0};
  	hal_led_init(&led2, 2);
-	
-	LED_t led3 = {0};
  	hal_led_init(&led3, 3);
 
 	pwm_driver_init(&led0, &led1, &led2, &led3);
@@ -102,10 +97,58 @@ static char * test_pwm_update() {
 	return 0;	
 }
 
+static char * test_pwm_channel_updater() {
+	LED_t led0, led1, led2, led3 = {0};
+ 	hal_led_init(&led0, 0);
+ 	hal_led_init(&led1, 1);
+ 	hal_led_init(&led2, 2);
+ 	hal_led_init(&led3, 3);
+
+	pwm_driver_init(&led0, &led1, &led2, &led3);
+
+  uint32_t i;
+
+	for(i = 0; i < 100; ++i) {
+		pwm_update_channels();
+	}
+	
+	pwm_driver_update();
+
+	mu_assert("led0 should be on", hal_led_read(&led0) == 1);
+	mu_assert("led1 should be off", hal_led_read(&led1) == 0);
+	mu_assert("led2 should be off", hal_led_read(&led2) == 0);
+	mu_assert("led3 should be off", hal_led_read(&led3) == 0);
+	
+	for(i = 0; i < 100; ++i) {
+		pwm_update_channels();
+	}
+	
+	pwm_driver_update();
+
+	mu_assert("led0 should be off", hal_led_read(&led0) == 0);
+	mu_assert("led1 should be off", hal_led_read(&led1) == 0);
+	mu_assert("led2 should be off", hal_led_read(&led2) == 0);
+	mu_assert("led3 should be off", hal_led_read(&led3) == 0);
+
+	for(i = 0; i < 100; ++i) {
+		pwm_update_channels();
+	}
+	
+	pwm_driver_update();
+
+	mu_assert("led0 should be off", hal_led_read(&led0) == 0);
+	mu_assert("led1 should be on", hal_led_read(&led1) == 1);
+	mu_assert("led2 should be off", hal_led_read(&led2) == 0);
+	mu_assert("led3 should be off", hal_led_read(&led3) == 0);
+	
+	return 0;
+}
+
 static char * all_tests() {
 	mu_run_test(test_led_init);
 	mu_run_test(test_led_on);
 	mu_run_test(test_pwm_update);
+	mu_run_test(test_pwm_channel_updater);
 	return 0;
 }
 

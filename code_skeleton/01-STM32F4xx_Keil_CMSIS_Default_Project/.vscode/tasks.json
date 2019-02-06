@@ -10,6 +10,7 @@
             "args": [
                 "-g",
                 "-I../ESS",
+                "${workspaceFolder}/../ESS/pwm_updater.c",
                 "${workspaceFolder}/../ESS/pwm_driver.c",
                 "${workspaceFolder}/../ESS/led_driver.c",
                 "${workspaceFolder}/Tests/led_driver_test_wrapper.c",
