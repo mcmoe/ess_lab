@@ -10,11 +10,11 @@ void display_init(LED_t * left, LED_t * top, LED_t * right, LED_t * bottom) {
 	pwm_driver_init(left, top, right, bottom);
 }
 
-uint8_t positive_led_value(tilt) {
+static uint8_t positive_led_value(int8_t tilt) {
 	return tilt > 45 ? 100 : tilt > 0 ? tilt * 2 : 0;
 }
 
-uint8_t negative_led_value(tilt) {
+static uint8_t negative_led_value(int8_t tilt) {
 	return tilt < -45 ? 100 : tilt < 0 ? tilt * -2 : 0;
 }
 
