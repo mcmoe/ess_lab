@@ -108,7 +108,7 @@ static char * test_pwm_channel_updater() {
 
   uint32_t i;
 
-	for(i = 0; i < 100; ++i) {
+	for(i = 0; i < 10000; ++i) {
 		pwm_update_channels();
 	}
 	
@@ -119,7 +119,7 @@ static char * test_pwm_channel_updater() {
 	mu_assert("led2 should be off", hal_led_read(&led2) == 0);
 	mu_assert("led3 should be off", hal_led_read(&led3) == 0);
 	
-	for(i = 0; i < 100; ++i) {
+	for(i = 0; i < 10000; ++i) {
 		pwm_update_channels();
 	}
 	
@@ -130,7 +130,7 @@ static char * test_pwm_channel_updater() {
 	mu_assert("led2 should be off", hal_led_read(&led2) == 0);
 	mu_assert("led3 should be off", hal_led_read(&led3) == 0);
 
-	for(i = 0; i < 100; ++i) {
+	for(i = 0; i < 10000; ++i) {
 		pwm_update_channels();
 	}
 	
