@@ -14,8 +14,6 @@
 // Initialize the SPI 
 void SPIAcc_Init(void);
 
-
-
 // Send a byte on SPI 
 // @param address address of register to write to 
 // @param data byte to send 
