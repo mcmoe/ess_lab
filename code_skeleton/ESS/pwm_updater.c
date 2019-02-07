@@ -14,15 +14,15 @@ static uint32_t ch3Brightness = 0;
 static int32_t change = 1;
 
 uint32_t * change_and_get(uint32_t * brightness, int32_t * change) {
-	*brightness = (*brightness + *change) % 101;
+	*brightness = (*brightness + *change) % 10000;
 	return brightness;
 }
 
 void update_channel(uint32_t ** currentChannel, uint32_t * targetChannel, uint32_t * brightness, int32_t * change, uint32_t * nextChannel) {
 	if (**currentChannel == *targetChannel) {
-		pwm_driver_set(*targetChannel, *change_and_get(brightness, change));
+		pwm_driver_set(*targetChannel, *change_and_get(brightness, change) / 100);
 
-		if(*brightness == 100) {
+		if(*brightness == 9999) {
 			 *change = -1;
 		} else if (*brightness == 0) {
 			*currentChannel = nextChannel;

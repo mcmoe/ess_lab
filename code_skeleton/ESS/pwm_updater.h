@@ -5,7 +5,6 @@
 #ifndef PWM_UPDATER_H
 #define PWM_UPDATER_H
 
-//#include <stdint.h>
 
 /**
 * Update channel starting from 0 -> 100 -> 0 rotating between them one at a time

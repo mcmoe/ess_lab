@@ -11,6 +11,7 @@
 
 /* Include core modules */
 #include "stm32f4xx.h"
+#include "stm32f4xx_tim.h"
 /* Include helper library */
 #include "ess_helper.h"
 
@@ -41,6 +42,52 @@ int fputc(int ch, FILE *f) {
 	//return -1;
 }
 
+// ======= Timer functions ========
+
+// Initialize Timer 4
+void TMR4_Init(void) {
+	TIM_TimeBaseInitTypeDef TIM_BaseStruct;
+
+	/* Enable clock for TIM4 */
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+
+	// timer_tick_frequency = 84000000 / (0 + 1) = 84000000
+	TIM_BaseStruct.TIM_Prescaler = 0;
+
+	/* Count up */
+	TIM_BaseStruct.TIM_CounterMode = TIM_CounterMode_Up;
+
+	/*
+	Set timer period when it must reset
+	First you have to know max value for timer
+	In our case it is 16bit = 65535
+	Frequency = timer_tick_frequency / (TIM_Period + 1)
+	If you get TIM_Period larger than max timer value (in our case 65535),
+	you have to choose larger prescaler and slow down timer tick frequency
+	*/
+	TIM_BaseStruct.TIM_Period = 8400; // I've put a value of 8.4K so that 84mHz/ 8.4K = 10kHz
+	TIM_BaseStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+	TIM_BaseStruct.TIM_RepetitionCounter = 0;
+
+  /* Initialize TIM4 */
+	TIM_TimeBaseInit(TIM4, &TIM_BaseStruct);
+
+  /* Start count on TIM4 */
+	TIM_Cmd(TIM4, ENABLE);
+}
+
+// Loops until the timer has expired
+void TMR4_WaitForExpiry(void) {
+	// Check the flag. When the timer is expired, the flag is SET.
+	while(TIM_GetFlagStatus(TIM4, TIM_FLAG_Update) == RESET)
+	{
+	}
+	// Reset flag for next expiry
+	TIM_ClearFlag(TIM4, TIM_IT_Update);
+}
+
+// ================================
+
 // delay by usec provided as argument
 void delay_usec(uint32_t delay);
 // delay by msec provided as argument
@@ -57,38 +104,6 @@ void delay_msec(uint32_t delay) {
 		delay_usec(delay * 1000);
 }
 
-void circle_through_lights_on_button_press(uint32_t* choice, LED_t * led) {
-	volatile uint32_t buttonRegister = GPIOA->IDR;
-
-	if(buttonRegister & 0x1) {
-			led_off(led);
-			*choice = (*choice + 1) % 4;
-			led_init(led, PORTD, 12 + *choice);
-			led_on(led);
-			//led_toggle(led);
-		}
-		delay_msec(1000);
-}
-
-void pwm_main(LED_t * led, uint32_t * on_time, uint32_t * off_time, uint32_t a_second, uint32_t * i, int32_t * change) {
-	led_on(led);
-	delay_msec(*on_time);
-	led_off(led);
-	delay_msec(*off_time);
-
-	//volatile uint32_t buttonRegister = GPIOA->IDR;
-	if(/*buttonRegister & 0x1 && */(*i)++ == a_second) {
-		if(*on_time == 10) {
-			*change = -1;
-		} else if(*on_time == 0) {
-			*change = 1;
-		}
-		*on_time = (*on_time + *change);
-		*off_time = (10 - (*on_time));
-		*i = 0;
-	}
-}
-
 int main(void) {
 	/* Initialize system */
 	SystemInit();
@@ -102,16 +117,12 @@ int main(void) {
 	led_init(&redLed, PORTD, redPin);
 	led_init(&blueLed, PORTD, bluePin);	
 
-	pwm_driver_init(&greenLed, &orangeLed, &redLed, &blueLed);	
-	const uint32_t period = 100;
+	pwm_driver_init(&greenLed, &orangeLed, &redLed, &blueLed);
+	TMR4_Init(); // initialize timer
 
 	while (1) {
-		delay_usec(100);
+		TMR4_WaitForExpiry();
 		pwm_update_channels();
-
-		uint32_t i = 0;
-		for (;i <= period * 50; i++) {
-			pwm_driver_update();
-		}	
+		pwm_driver_update();
 	}
 }
