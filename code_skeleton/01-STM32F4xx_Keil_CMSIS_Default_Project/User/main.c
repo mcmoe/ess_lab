@@ -127,10 +127,8 @@ int main(void) {
 	while (1) {
 		volatile uint32_t buttonRegister = GPIOA->IDR;
 		if(buttonRegister & 0x1) {
-			pwm_driver_set(0, 100);
-			pwm_driver_set(1, 100);
-			pwm_driver_set(2, 100);
-			pwm_driver_set(3, 100);
+			pwm_updater_reverse();
+			delay_msec(1000);
 		}
 	}
 }
