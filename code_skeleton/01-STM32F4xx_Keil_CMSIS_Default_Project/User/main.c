@@ -44,19 +44,24 @@ int fputc(int ch, FILE *f) {
 
 // ======= Timer functions ========
 
-// Initialize Timer 4
-void TMR4_Init(void) {
+// Initialize Timer 4 for interrupts
+void TMR4_Init_ISR(void) {
+	// Setup the nested vector interrupt controller
+	NVIC_InitTypeDef NVIC_InitStructure;
 	TIM_TimeBaseInitTypeDef TIM_BaseStruct;
-
+	/* Enable the TIM4 gloabal Interrupt */
+	NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
 	/* Enable clock for TIM4 */
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
 
 	// timer_tick_frequency = 84000000 / (0 + 1) = 84000000
 	TIM_BaseStruct.TIM_Prescaler = 0;
-
 	/* Count up */
 	TIM_BaseStruct.TIM_CounterMode = TIM_CounterMode_Up;
-
 	/*
 	Set timer period when it must reset
 	First you have to know max value for timer
@@ -68,22 +73,12 @@ void TMR4_Init(void) {
 	TIM_BaseStruct.TIM_Period = 8400; // I've put a value of 8.4K so that 84mHz/ 8.4K = 10kHz
 	TIM_BaseStruct.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_BaseStruct.TIM_RepetitionCounter = 0;
-
-  /* Initialize TIM4 */
+	/* Initialize TIM4 */
 	TIM_TimeBaseInit(TIM4, &TIM_BaseStruct);
-
-  /* Start count on TIM4 */
+	/* TIM Interrupt enable */
+	TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
+	/* Start count on TIM4 */
 	TIM_Cmd(TIM4, ENABLE);
-}
-
-// Loops until the timer has expired
-void TMR4_WaitForExpiry(void) {
-	// Check the flag. When the timer is expired, the flag is SET.
-	while(TIM_GetFlagStatus(TIM4, TIM_FLAG_Update) == RESET)
-	{
-	}
-	// Reset flag for next expiry
-	TIM_ClearFlag(TIM4, TIM_IT_Update);
 }
 
 // ================================
@@ -104,6 +99,15 @@ void delay_msec(uint32_t delay) {
 		delay_usec(delay * 1000);
 }
 
+// This is triggered when the counter overflows
+void TIM4_IRQHandler(void) {
+	if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET) {
+		TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
+		pwm_update_channels();
+		pwm_driver_update();
+	}
+}
+
 int main(void) {
 	/* Initialize system */
 	SystemInit();
@@ -118,11 +122,15 @@ int main(void) {
 	led_init(&blueLed, PORTD, bluePin);	
 
 	pwm_driver_init(&greenLed, &orangeLed, &redLed, &blueLed);
-	TMR4_Init(); // initialize timer
+	TMR4_Init_ISR(); // initialize timer
 
 	while (1) {
-		TMR4_WaitForExpiry();
-		pwm_update_channels();
-		pwm_driver_update();
+		volatile uint32_t buttonRegister = GPIOA->IDR;
+		if(buttonRegister & 0x1) {
+			pwm_driver_set(0, 100);
+			pwm_driver_set(1, 100);
+			pwm_driver_set(2, 100);
+			pwm_driver_set(3, 100);
+		}
 	}
 }
