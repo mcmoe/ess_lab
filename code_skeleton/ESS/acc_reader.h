@@ -9,7 +9,8 @@ struct acc3 {
 typedef struct acc3 acc3_t;
 
 // Initialize accelerometer
-void AccInit(void);
+// return 1 if error otherwise 0
+uint16_t AccInit(void);
 
-// Obtain a reading
+// Obtain a reading in angles
 void AccRead(acc3_t * reading);

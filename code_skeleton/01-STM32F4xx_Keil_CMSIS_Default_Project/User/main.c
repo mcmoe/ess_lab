@@ -38,7 +38,6 @@ int fputc(int ch, FILE *f) {
 	/* Do your stuff here */
 	/* Send your custom byte */
 	
-	
 	/* If everything is OK, you have to return character written */
 	return itm_debug(ch);
 	/* If character is not correct, you can return EOF (-1) to stop writing */
@@ -62,7 +61,6 @@ void delay_msec(uint32_t delay) {
 }
 
 static uint8_t button_pressed = 0;
-
 void respond_to_button() {
  volatile uint32_t buttonRegister = GPIOA->IDR;
 	if(buttonRegister & 0x1) {
@@ -80,10 +78,14 @@ void update_leds(void) {
 }
 
 void (*timer_function) (void) = &update_leds;
-
 static LED_t greenLed, orangeLed, redLed, blueLed = { 0 };
-
 void init() {
+	/* Initialize system */
+	SystemInit();
+	/* Initialize peripherals on board */
+	ess_helper_init();
+  /* Initialize use case */
+
 	led_init(&greenLed, PORTD, greenPin);
 	led_init(&orangeLed, PORTD, orangePin);
 	led_init(&redLed, PORTD, redPin);
@@ -94,33 +96,19 @@ void init() {
 	AccInit();
 }
 
-void test_accelerometer() {
-	uint8_t WHO_AM_I = 0xF;
-	uint8_t who_am_i = SPIAcc_GetByte(WHO_AM_I);
-	printf("who am i[%#02x]: %#02x\n", WHO_AM_I, who_am_i);
-}
-
+static acc3_t reading = { 0 };
 void sense_tilt_and_display() {
-	acc3_t reading = { 0 };
 	AccRead(&reading);
 	display_tilt(reading.x, reading.y);
 }
 
 int main(void) {
-	/* Initialize system */
-	SystemInit();
-	/* Initialize peripherals on board */
-	ess_helper_init();
-	// Main loop 
-
 	init();
-	test_accelerometer();
-
 	while (1) {
 		respond_to_button();
 		if(button_pressed == 0) {
-			delay_msec(300);
 			sense_tilt_and_display();
+			delay_msec(10);
 		}
 	}
 }

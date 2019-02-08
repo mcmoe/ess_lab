@@ -9,62 +9,46 @@ static const uint8_t OUT_Y_H = 0x2B;
 static const uint8_t OUT_Y_L = 0x2A;
 static const uint8_t OUT_Z_H = 0x2D;
 static const uint8_t OUT_Z_L = 0x2C;
+static const uint8_t WHO_AM_I = 0xF;
 
-void AccInit(void) {
+uint16_t test_accelerometer() {
+	uint8_t who_am_i = SPIAcc_GetByte(WHO_AM_I);
+	//printf("who am i[%#02x]: %#02x\n", WHO_AM_I, who_am_i);
+	return who_am_i != 0x3f;
+}
+
+uint16_t AccInit(void) {
 	SPIAcc_Init();
-	SPIAcc_SendByte(CTRL_REG1, 0x87);
+	SPIAcc_SendByte(CTRL_REG1, 0x87);	
+	return test_accelerometer();
 }
 
-static int8_t compute_x_tilt(int16_t x_axis) {
-	// 100 -> 600 >> normal
-	// 10K ~ 45 C degrees
-	if(x_axis <= -10000) {
-		return -46;
-	}
-	if(x_axis >= 10000) {
-		return 46;
-	}
-	if(100 <= x_axis && x_axis <= 600) {
-		return 0;
-	}
-
-	return x_axis / 217; // approximating a degree to ~ 200
+/*
+* Assuming a measurement using a 16bit ADC
+* Then we can calculate 360° = (2^16)
+* 
+*/
+static int8_t compute_tilt(int16_t axis) {
+	return (int32_t) 360 * axis / 65536;
 }
 
-static int8_t compute_y_tilt(int16_t y_axis) {
-	// -400 -> 100 >> normal
-	// 10L | 45 degrees
-	if(y_axis <= -10000) {
-		return -46;
-	}
-	if(y_axis >= 10000) {
-		return 46;
-	}
-	if(-400 <= y_axis && y_axis <= 100) {
-		return 0;
-	}
-
-	return y_axis / 217; // approximating a degree to ~ 200
+static int16_t read_axis(uint8_t high, uint8_t low) {
+	uint8_t data_h = SPIAcc_GetByte(high);
+	uint8_t data_l = SPIAcc_GetByte(low);
+	return (data_h << 8) + data_l;
 }
 
 void AccRead(acc3_t * reading) {
-	uint8_t data_xh = SPIAcc_GetByte(OUT_X_H);
-	uint8_t data_xl = SPIAcc_GetByte(OUT_X_L);
-	int16_t x_axis = (data_xh << 8) + data_xl;
+	int16_t x_axis = read_axis(OUT_X_H, OUT_X_L);
+	int16_t y_axis = read_axis(OUT_Y_H, OUT_Y_L);
+	int16_t z_axis = read_axis(OUT_Z_H, OUT_Z_L);
 
-	uint8_t data_yh = SPIAcc_GetByte(OUT_Y_H);
-	uint8_t data_yl = SPIAcc_GetByte(OUT_Y_L);
-	int16_t y_axis = (data_yh << 8) + data_yl;
+	int8_t x_tilt = compute_tilt(x_axis);
+	int8_t y_tilt = compute_tilt(y_axis);
+  int8_t z_tilt = compute_tilt(z_axis);
+	printf("\nxa: %d || ya: %d || za: %d", x_tilt, y_tilt, z_tilt);
 
-	uint8_t data_zh = SPIAcc_GetByte(OUT_Z_H);
-	uint8_t data_zl = SPIAcc_GetByte(OUT_Z_L);
-	int16_t z_axis = (data_zh << 8) + data_zl;
-
-	printf("x: %d || y: %d || z: %d\n", x_axis, y_axis, z_axis);
-	uint8_t x_tilt = compute_x_tilt(x_axis);
-	uint8_t y_tilt = compute_y_tilt(y_axis);
-	
 	reading->x = x_tilt;
 	reading->y = y_tilt;
-	reading->z = 0; // TODO
+	reading->z = z_tilt;
 }
