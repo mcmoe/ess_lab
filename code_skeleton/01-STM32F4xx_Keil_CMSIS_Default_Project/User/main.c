@@ -61,17 +61,22 @@ void delay_msec(uint32_t delay) {
 		delay_usec(delay * 1000);
 }
 
-/*void respond_to_button() {
+static uint8_t button_pressed = 0;
+
+void respond_to_button() {
  volatile uint32_t buttonRegister = GPIOA->IDR;
 	if(buttonRegister & 0x1) {
+		button_pressed = 1;
 		pwm_updater_reverse();
 		delay_msec(1000);
 	}
-}*/
+}
 
 void update_leds(void) {
-		//pwm_update_channels();
-		pwm_driver_update();
+	if(button_pressed == 1) {
+		pwm_update_channels();
+	}
+	pwm_driver_update();
 }
 
 void (*timer_function) (void) = &update_leds;
@@ -112,8 +117,10 @@ int main(void) {
 	test_accelerometer();
 
 	while (1) {
-		//respond_to_button();
-		delay_msec(300);
-		sense_tilt_and_display();
+		respond_to_button();
+		if(button_pressed == 0) {
+			delay_msec(300);
+			sense_tilt_and_display();
+		}
 	}
 }
