@@ -26,7 +26,7 @@ uint16_t AccInit(void) {
 /*
 * Assuming a measurement using a 16bit ADC
 * Then we can calculate 360° = (2^16)
-* 
+* Detailed explanation on computation of g and angles from x,y,z @ http://www.starlino.com/imu_guide.html
 */
 static int8_t compute_tilt(int16_t axis) {
 	return (int32_t) 360 * axis / 65536;

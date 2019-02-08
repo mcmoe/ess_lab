@@ -18,7 +18,6 @@
 #include "led_driver.h"
 #include "pwm_driver.h"
 #include "pwm_updater.h"
-#include "spi_driver.h"
 #include "acc_reader.h"
 #include "display_driver.h"
 
@@ -61,14 +60,6 @@ void delay_msec(uint32_t delay) {
 }
 
 static uint8_t button_pressed = 0;
-void respond_to_button() {
- volatile uint32_t buttonRegister = GPIOA->IDR;
-	if(buttonRegister & 0x1) {
-		button_pressed = 1;
-		pwm_updater_reverse();
-		delay_msec(1000);
-	}
-}
 
 void update_leds(void) {
 	if(button_pressed == 1) {
@@ -77,7 +68,18 @@ void update_leds(void) {
 	pwm_driver_update();
 }
 
-void (*timer_function) (void) = &update_leds;
+static acc3_t reading = { 0 };
+void sense_tilt_and_display() {
+	AccRead(&reading);
+	display_tilt(reading.x, reading.y);
+}
+
+void sample_accelerometer(void) {
+	if(button_pressed == 0) {
+		sense_tilt_and_display();
+	}
+}
+
 static LED_t greenLed, orangeLed, redLed, blueLed = { 0 };
 void init() {
 	/* Initialize system */
@@ -92,23 +94,24 @@ void init() {
 	led_init(&blueLed, PORTD, bluePin);	
 
 	pwm_driver_init(&greenLed, &orangeLed, &redLed, &blueLed);
-	timer_init(timer_function); // initialize timer including the desired callback
+	timer4_init(&update_leds);
+
 	AccInit();
+	timer3_init(&sample_accelerometer);
 }
 
-static acc3_t reading = { 0 };
-void sense_tilt_and_display() {
-	AccRead(&reading);
-	display_tilt(reading.x, reading.y);
+void respond_to_button() {
+ volatile uint32_t buttonRegister = GPIOA->IDR;
+	if(buttonRegister & 0x1) {
+		button_pressed = 1;
+		pwm_updater_reverse();
+		delay_msec(1000);
+	}
 }
 
 int main(void) {
 	init();
 	while (1) {
 		respond_to_button();
-		if(button_pressed == 0) {
-			sense_tilt_and_display();
-			delay_msec(10);
-		}
 	}
 }
