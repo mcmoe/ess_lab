@@ -545,6 +545,16 @@
               <FileType>5</FileType>
               <FilePath>..\ESS\spi_driver.h</FilePath>
             </File>
+            <File>
+              <FileName>acc_reader.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ESS\acc_reader.c</FilePath>
+            </File>
+            <File>
+              <FileName>acc_reader.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\ESS\acc_reader.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -18,6 +18,9 @@
 #include "led_driver.h"
 #include "pwm_driver.h"
 #include "pwm_updater.h"
+#include "spi_driver.h"
+#include "acc_reader.h"
+#include "display_driver.h"
 
 // Use a define for the address of the PORTD ouput register
 #define PORTD ((volatile uint32_t*) 0x40020C14)
@@ -58,12 +61,45 @@ void delay_msec(uint32_t delay) {
 		delay_usec(delay * 1000);
 }
 
+/*void respond_to_button() {
+ volatile uint32_t buttonRegister = GPIOA->IDR;
+	if(buttonRegister & 0x1) {
+		pwm_updater_reverse();
+		delay_msec(1000);
+	}
+}*/
+
 void update_leds(void) {
-		pwm_update_channels();
+		//pwm_update_channels();
 		pwm_driver_update();
 }
 
 void (*timer_function) (void) = &update_leds;
+
+static LED_t greenLed, orangeLed, redLed, blueLed = { 0 };
+
+void init() {
+	led_init(&greenLed, PORTD, greenPin);
+	led_init(&orangeLed, PORTD, orangePin);
+	led_init(&redLed, PORTD, redPin);
+	led_init(&blueLed, PORTD, bluePin);	
+
+	pwm_driver_init(&greenLed, &orangeLed, &redLed, &blueLed);
+	timer_init(timer_function); // initialize timer including the desired callback
+	AccInit();
+}
+
+void test_accelerometer() {
+	uint8_t WHO_AM_I = 0xF;
+	uint8_t who_am_i = SPIAcc_GetByte(WHO_AM_I);
+	printf("who am i[%#02x]: %#02x\n", WHO_AM_I, who_am_i);
+}
+
+void sense_tilt_and_display() {
+	acc3_t reading = { 0 };
+	AccRead(&reading);
+	display_tilt(reading.x, reading.y);
+}
 
 int main(void) {
 	/* Initialize system */
@@ -72,20 +108,12 @@ int main(void) {
 	ess_helper_init();
 	// Main loop 
 
-	LED_t greenLed, orangeLed, redLed, blueLed = { 0 };
-	led_init(&greenLed, PORTD, greenPin);
-	led_init(&orangeLed, PORTD, orangePin);
-	led_init(&redLed, PORTD, redPin);
-	led_init(&blueLed, PORTD, bluePin);	
-
-	pwm_driver_init(&greenLed, &orangeLed, &redLed, &blueLed);
-	timer_init(timer_function); // initialize timer including the desired callback
+	init();
+	test_accelerometer();
 
 	while (1) {
-		volatile uint32_t buttonRegister = GPIOA->IDR;
-		if(buttonRegister & 0x1) {
-			pwm_updater_reverse();
-			delay_msec(1000);
-		}
+		//respond_to_button();
+		delay_msec(300);
+		sense_tilt_and_display();
 	}
 }

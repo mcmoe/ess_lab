@@ -26,7 +26,7 @@ void pwm_driver_init(LED_t * ch0, LED_t * ch1, LED_t * ch2, LED_t * ch3) {
 	state.ch1_compare = 0;
 	state.ch2_compare = 0;
 	state.ch3_compare = 0;
-	
+
 	// store the pointers of each led driver
 	state.ch0 = ch0;
 	state.ch1 = ch1;
