@@ -28,6 +28,7 @@ const uint32_t greenPin = 12;
 const uint32_t orangePin = 13;
 const uint32_t redPin = 14;
 const uint32_t bluePin = 15;
+static LED_t greenLed, orangeLed, redLed, blueLed = { 0 };
 
 int itm_debug(int c){
   return(ITM_SendChar(c));
@@ -68,19 +69,42 @@ void update_leds(void) {
 	pwm_driver_update();
 }
 
+static void add_to_vector(acc3_t * v, acc3_t * u) {
+	v->x += u->x;
+	v->y += u->y;
+	v->z += u->z;
+}
+
+static void set_vector(acc3_t * v, int16_t x, int16_t y, int16_t z) {
+	v->x = x;
+	v->y = y;
+	v->z = z;
+}
+
+uint8_t i = 0;
 static acc3_t reading = { 0 };
-void sense_tilt_and_display() {
-	AccRead(&reading);
-	display_tilt(reading.x, reading.y);
+static acc3_t sum_reading = { 0 };
+static acc3_t final_average_reading = { 0 };
+static uint8_t tilt_sample_ready = 0;
+void sense_tilt() {
+	if(i < 16) {
+		AccRead(&reading);
+		add_to_vector(&sum_reading, &reading);
+		i++;
+	} else {
+		set_vector(&final_average_reading, sum_reading.x / 16, sum_reading.y / 16, sum_reading.z / 16);
+		set_vector(&sum_reading, 0, 0, 0);
+		tilt_sample_ready = 1;
+		i = 0;
+	}
 }
 
 void sample_accelerometer(void) {
 	if(button_pressed == 0) {
-		sense_tilt_and_display();
+		sense_tilt();
 	}
 }
 
-static LED_t greenLed, orangeLed, redLed, blueLed = { 0 };
 void init() {
 	/* Initialize system */
 	SystemInit();
@@ -113,5 +137,9 @@ int main(void) {
 	init();
 	while (1) {
 		respond_to_button();
+		if(tilt_sample_ready == 1) {
+			display_tilt(final_average_reading.x, final_average_reading.y);
+			tilt_sample_ready = 0;
+		}
 	}
 }
